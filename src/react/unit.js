@@ -20,6 +20,36 @@ class TextUint extends Unit {
     return `<span data-reactid="${reactId}">${this._currentElement}</span>`
   }
 }
+// 复合单元 渲染的是里面的render
+class CompositeUnit extends Unit {
+  /**
+   * 
+   * @param {*} reactId 
+   */
+  getMarkUp (reactId) {
+    this._reactId = reactId
+    // type=Component=Counter props: { name: 'haha' }
+    let { type: Component, props } = this._currentElement
+    // 实例化 后面还会用到
+    let componentInstance = this._componentInstance = new Component(props)
+    // 让组件的实例的currentUnit等于当前的unit
+    componentInstance.currentUnit = this
+
+    // 渲染前要componentWillMount
+    componentInstance.componentWillMount && componentInstance.componentWillMount()
+    // 调render方法 得到渲染的元素
+    let renderElement = componentInstance.render()
+    // 得到render的元素对应的unit
+    let renderedInstance = this._renderedInstance = createUnit(renderElement)
+    // 调用方法 返回字符串
+    let renderedMarkup = renderedInstance.getMarkUp(reactId)
+    // 绑定事件
+    $(document).on('mounted', () => {
+      componentInstance.componentDidMount && componentInstance.componentDidMount()
+    })
+    return renderedMarkup
+  }
+}
 class NativeUint extends Unit {
   /**
    * 
@@ -72,6 +102,8 @@ function createUnit (element) {
     return new TextUint(element)
   } else if (element instanceof Element && ['string'].includes(typeof element.type)) {
     return new NativeUint(element)
+  } else if (element instanceof Element && ['function'].includes(typeof element.type)) {
+    return new CompositeUnit(element)
   }
 }
 export { createUnit }

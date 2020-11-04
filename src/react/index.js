@@ -1,10 +1,11 @@
 import $ from 'jquery';
 import { createUnit } from './unit'
 import { createElement } from './element'
+import { Component } from './component'
 const React = {
   render,
   rootIndex: 0,
-  createElement
+  createElement, Component
 }
 /**
  *
@@ -18,6 +19,7 @@ function render (element, container) {
   let unit = createUnit(element)
   let markUp = unit.getMarkUp(React.rootIndex) // 返回HTML标记
   $(container).html(markUp)
+  $(document).trigger('mounted')
 }
 
 export default React
