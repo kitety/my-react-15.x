@@ -169,6 +169,56 @@ class NativeUint extends Unit {
     }
     return tagStart + '>' + childString + tagEnd
   }
+  /**
+ * 
+ * @param {*} nextElement 新元素
+ */
+  update (nextElement) {
+    // 更新属性
+    let oldProps = this._currentElement.props
+    let newProps = nextElement.props
+    this.updateDomProperties(oldProps, newProps)
+  }
+  /**
+   * 更新属性
+   * @param {*} oldProps 
+   * @param {*} newProps 
+   */
+  updateDomProperties (oldProps, newProps) {
+    let propName
+    // 循环老的属性集合
+    for (propName in oldProps) {
+      if (!newProps.hasOwnProperty(propName)) {
+        // 删除属性
+        $(`[data-reactid="${this._reactId}"]`).removeAttr(propName)
+      } if (/on[A-Z]/.test(propName)) {
+        $(document).off(`.${this._reactId}`)
+      }
+    }
+    for (propName in newProps) {
+      if (propName === 'children') {
+        continue
+        // 单独处理
+      } else if (/^on[A-Z]/.test(propName)) {
+        // 需要绑定事件
+        let eventName = propName.slice(2).toLowerCase()
+        $(document).on(`${eventName}.${this._reactId}`, `[data-reactid="${this._reactId}"]`, newProps[propName])
+      } else if (propName === 'style') {
+        const styleObj = newProps[propName]
+        // 样式对象 backgroundColor
+        Object.entries(styleObj).map(([attr, value]) => {
+          // 这里拿到的是已经处理过的
+          $(`[data-reactid="${this._reactId}"]`).css(attr, value)
+        })
+      } else if (propName === 'className') {
+        $(`[data-reactid="${this._reactId}"]`).attr('class', newProps[propName])
+      } else {
+        $(`[data-reactid="${this._reactId}"]`).props(propName, newProps[propName])
+      }
+
+    }
+  }
+
 }
 function createUnit (element) {
   if (['number', 'string'].includes(typeof element)) {

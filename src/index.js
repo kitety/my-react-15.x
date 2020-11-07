@@ -70,34 +70,48 @@ import React from './react'
 //     }, "+"));
 //   }
 // }
+// class Counter extends React.Component {
+//   constructor(props) {
+//     super(props)
+//     this.state = { number: 1 }
+//   }
+//   componentWillMount () {
+//     console.log('Counter componentWillMount')
+//   }
+//   componentDidMount () {
+//     console.log('Counter componentDidMount')
+//     // setInterval(() => {
+//     this.setState({ number: this.state.number + 1 })
+//     // }, 1000);
+//   }
+//   shouldComponentUpdate () {
+//     return true
+//   }
+//   componentDidUpdate (a) {
+//     console.log('Counter componentDidUpdate', a)
+
+//   }
+//   handleClick = () => {
+//     this.setState({ number: this.state.number + 1 })
+//   }
+//   render () {
+//     console.log('render')
+
+//     return this.state.number
+//   }
+// }
 class Counter extends React.Component {
   constructor(props) {
     super(props)
     this.state = { number: 1 }
   }
-  componentWillMount () {
-    console.log('Counter componentWillMount')
-  }
-  componentDidMount () {
-    console.log('Counter componentDidMount')
-    // setInterval(() => {
-    this.setState({ number: this.state.number + 1 })
-    // }, 1000);
-  }
-  shouldComponentUpdate () {
-    return true
-  }
-  componentDidUpdate (a) {
-    console.log('Counter componentDidUpdate', a)
-
-  }
   handleClick = () => {
     this.setState({ number: this.state.number + 1 })
   }
   render () {
-    console.log('render')
-
-    return this.state.number
+    let p = React.createElement('p', {}, this.state.number)
+    let button = React.createElement('button', { onClick: this.handleClick }, '+')
+    return React.createElement('div', { style: { color: this.state.number % 2 === 0 ? 'red' : 'green' } }, p, button)
   }
 }
 const ele = React.createElement(Counter, { name: 'haha' })
