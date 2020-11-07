@@ -19,6 +19,14 @@ class TextUint extends Unit {
     this._reactId = reactId
     return `<span data-reactid="${reactId}">${this._currentElement}</span>`
   }
+  update (nextElement) {
+    if (this._currentElement !== nextElement) {
+      this._currentElement = nextElement
+      $(`[data-reactid="${this._reactId}"]`).html(nextElement)
+    }
+
+
+  }
 }
 // 复合单元 渲染的是里面的render
 class CompositeUnit extends Unit {
@@ -31,15 +39,17 @@ class CompositeUnit extends Unit {
     // type=Component=Counter props: { name: 'haha' }
     let { type: Component, props } = this._currentElement
     // 实例化 后面还会用到
+    // 当前的component实例 Counter的实例
     let componentInstance = this._componentInstance = new Component(props)
     // 让组件的实例的currentUnit等于当前的unit
-    componentInstance.currentUnit = this
+    componentInstance._currentUnit = this
 
     // 渲染前要componentWillMount
     componentInstance.componentWillMount && componentInstance.componentWillMount()
     // 调render方法 得到渲染的元素
     let renderElement = componentInstance.render()
     // 得到render的元素对应的unit
+    // 当前组件render方法返回的元素对应的的unit 是Unit的实例 里面肯定有个_currentElement==当前组件render方法返回的元素
     let renderedInstance = this._renderedInstance = createUnit(renderElement)
     // 调用方法 返回字符串
     let renderedMarkup = renderedInstance.getMarkUp(reactId)
@@ -49,6 +59,69 @@ class CompositeUnit extends Unit {
     })
     return renderedMarkup
   }
+  /**
+   * 
+   * @param {*} nextElement 新元素
+   * @param {*} partialState 新状态
+   */
+  update (nextElement, partialState) {
+    // 新元素
+    this._currentElement = nextElement || this._currentElement
+    let prevState = Object.assign({}, this._componentInstance.state)
+    // 新状态 不光是否更新 组建的状态一定会修改  会修改目标值
+    let nextState = Object.assign(this._componentInstance.state, partialState)
+    // 新属性对象
+    let nextProps = this._currentElement.props
+    const { shouldComponentUpdate, componentDidUpdate } = this._componentInstance
+    if (shouldComponentUpdate && !shouldComponentUpdate(nextProps, nextState)) {
+      return
+    }
+    // DOM diff 比较上一次的结果和这次的结果
+
+    // 上次的渲染的单元 是个Unit的实例
+    let preRenderedInstance = this._renderedInstance  // text 
+    // 上次渲染的元素
+    let preRenderedElement = preRenderedInstance._currentElement  //1
+    // 获取新的render元素 
+    let nextRenderElement = this._componentInstance.render()
+    // 判断是否进行深度比较
+    // 新旧元素一样 深度比较 
+    // 不一样 就新的替换老的
+    if (shouldDeepCompare(preRenderedElement, nextRenderElement)) {
+      // 如果可以深度比较 则吧更新工作交给上次render渲染出来的元素的对应的unit来update
+      // render的实例
+      preRenderedInstance.update(nextRenderElement)
+      componentDidUpdate && componentDidUpdate(prevState, nextProps)
+
+    } else {
+      this._renderedInstance = createUnit(nextRenderElement)
+      let nextMarkUp = this._renderedInstance.getMarkUp(this._reactId)
+      // 新的内容替换旧的节点
+      $(`[data-reactid="${this._reactId}"]`).replaceWith(nextMarkUp)
+    }
+
+  }
+}
+
+/**
+ * 判断类型是不是一样的
+ * @param {*} preRenderedElement 
+ * @param {*} nextRenderElement 
+ */
+function shouldDeepCompare (oldElement, newElement) {
+  if (oldElement && newElement) {
+    let oldType = typeof oldElement
+    let newType = typeof newElement
+    // 文本
+    if ((['string', 'number'].includes(oldType) && ['string', 'number'].includes(newType))) {
+      return true  // 可以直接替换了
+    }
+    if (oldElement instanceof Element && newElement instanceof Element) {
+      // 两元素的type 一样深度比较，不一样就直接干掉
+      return oldElement.type === newElement.type
+    }
+  }
+  return false
 }
 class NativeUint extends Unit {
   /**

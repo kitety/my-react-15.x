@@ -38,6 +38,38 @@ import React from './react'
 //     </div>
 //   }
 // }
+// class Counter extends React.Component {
+//   constructor(props) {
+//     super(props)
+//     this.state = { number: 1 }
+//   }
+//   componentWillMount () {
+//     console.log('Counter componentWillMount')
+//   }
+//   componentDidMount () {
+//     console.log('Counter componentDidMount')
+//   }
+//   handleClick = () => {
+//     this.setState({ number: this.state.number + 1 })
+//   }
+//   render () {
+//     console.log('render')
+
+//     return /*#__PURE__*/React.createElement("div", {
+//       onClick: () => {
+//         console.log(1);
+//       },
+//       style: {
+//         backgroundColor: 'red'
+//       }
+//     }, "\u4F60\u597D", this.props.name, /*#__PURE__*/React.createElement("span", {
+//       class: "test",
+//       id: "thisisaspan"
+//     }, "\u6570\u5B57\u662F\uFF1A", this.state.number), /*#__PURE__*/React.createElement("button", {
+//       onClick: this.handleClick
+//     }, "+"));
+//   }
+// }
 class Counter extends React.Component {
   constructor(props) {
     super(props)
@@ -48,24 +80,24 @@ class Counter extends React.Component {
   }
   componentDidMount () {
     console.log('Counter componentDidMount')
+    // setInterval(() => {
+    this.setState({ number: this.state.number + 1 })
+    // }, 1000);
+  }
+  shouldComponentUpdate () {
+    return true
+  }
+  componentDidUpdate (a) {
+    console.log('Counter componentDidUpdate', a)
+
   }
   handleClick = () => {
     this.setState({ number: this.state.number + 1 })
   }
   render () {
-    return /*#__PURE__*/React.createElement("div", {
-      onClick: () => {
-        console.log(1);
-      },
-      style: {
-        backgroundColor: 'red'
-      }
-    }, "\u4F60\u597D", this.props.name, /*#__PURE__*/React.createElement("span", {
-      class: "test",
-      id: "thisisaspan"
-    }, "\u6570\u5B57\u662F\uFF1A", this.state.number), /*#__PURE__*/React.createElement("button", {
-      onClick: this.handleClick
-    }, "+"));
+    console.log('render')
+
+    return this.state.number
   }
 }
 const ele = React.createElement(Counter, { name: 'haha' })
