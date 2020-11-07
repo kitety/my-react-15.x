@@ -1,5 +1,8 @@
 import { Element } from './element'
 import $ from 'jquery'
+
+let diffQueue = [] // 差异队列
+let updateDepth = 0 //更新的级别
 // 基类 不可以实例化
 class Unit {
   constructor(element) {
@@ -136,6 +139,7 @@ class NativeUint extends Unit {
     let tagStart = `<${type} data-reactid="${reactId}" `
     let childString = ''
     let tagEnd = `</${type}>`
+    this._renderedChildrenUnits = []
     for (let propName in props) {
       if (/^on[A-Z]/.test(propName)) {
         // 需要绑定事件
@@ -156,9 +160,10 @@ class NativeUint extends Unit {
         childString = children.map((child, index) => {
           let unit = createUnit(child)
           let str = unit.getMarkUp(`${reactId}.${index}`)
+          this._renderedChildrenUnits.push(unit)
           return str
         }).join('')
-        console.log(childString)
+
 
       } else if (propName === 'className') {
         tagStart += ` class="${props[propName]}"`
@@ -174,10 +179,59 @@ class NativeUint extends Unit {
  * @param {*} nextElement 新元素
  */
   update (nextElement) {
+    console.log('nextElement', nextElement);
     // 更新属性
     let oldProps = this._currentElement.props
     let newProps = nextElement.props
     this.updateDomProperties(oldProps, newProps)
+    this.updateDomChildren(nextElement.props.children)
+  }
+  /**
+   * 传新的children 和就得children对比 找出差异
+   * @param {*} newChildrenElement 新children
+   */
+  updateDomChildren (newChildrenElement) {
+    this.diff(diffQueue, newChildrenElement)
+  }/**
+   * 
+   * @param {*} diffQueue 队列
+   * @param {*} newChildrenElement 新的子元素
+   */
+  diff (diffQueue, newChildrenElement) {
+    // 新旧节点map  key
+    let oldChildrenUnitMap = this.getOldChildrenMap(this._renderedChildrenUnits)
+    let newChildren = this.getNewChildren(oldChildrenUnitMap, newChildrenElement)
+
+  }
+  getNewChildren (oldChildrenUnitMap, newChildrenElement) {
+    /**
+     * 先找找老的有没有
+     * 有就用 没有就创建新的
+     */
+    let newChildren = []
+    newChildrenElement.forEach((newElement, index) => {
+      let newKey = (newElement.props && newElement.props.key) || index.toString()
+      let oldUnit = oldChildrenUnitMap[newKey]// 找到老的Unit
+      let oldElement = oldUnit && oldUnit._currentElement// 老元素
+      if (shouldDeepCompare(newElement, oldElement)) {
+        // 一样可以复用 可以复用 更新
+        oldUnit.update(newElement)
+        newChildren.push(oldUnit)
+      } else {
+        let nextUnit = createUnit(newElement)
+        newChildren.push(nextUnit)
+      }
+    })
+    return newChildren
+  }
+  getOldChildrenMap (childUnits = []) {
+    let map = {}
+    for (let i = 0; i < childUnits.length; i++) {
+      const unit = childUnits[i];
+      let key = (unit._currentElement.props && unit._currentElement.props.key) || i.toString()
+      map[key] = unit
+    }
+    return map
   }
   /**
    * 更新属性
