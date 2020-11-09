@@ -100,18 +100,47 @@ import React from './react'
 //     return this.state.number
 //   }
 // }
+// class Counter extends React.Component {
+//   constructor(props) {
+//     super(props)
+//     this.state = { number: 1 }
+//   }
+//   handleClick = () => {
+//     this.setState({ number: this.state.number + 1 })
+//   }
+//   render () {
+//     let p = React.createElement('p', {}, this.state.number)
+//     let button = React.createElement('button', { onClick: this.handleClick }, '+')
+//     return React.createElement('div', { style: { color: this.state.number % 2 === 0 ? 'red' : 'green' } }, p, button)
+//   }
+// }
 class Counter extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { number: 1 }
+    this.state = { odd: true }
   }
-  handleClick = () => {
-    this.setState({ number: this.state.number + 1 })
+  componentDidMount () {
+    setTimeout(() => {
+      this.setState({ odd: false })
+    }, 2000);
   }
   render () {
-    let p = React.createElement('p', {}, this.state.number)
-    let button = React.createElement('button', { onClick: this.handleClick }, '+')
-    return React.createElement('div', { style: { color: this.state.number % 2 === 0 ? 'red' : 'green' } }, p, button)
+    if (this.state.odd) {
+      return React.createElement('ul', { id: 'oldCounter' },
+        React.createElement('li', { key: 'A' }, 'A'),
+        React.createElement('li', { key: 'B' }, 'B'),
+        React.createElement('li', { key: 'C' }, 'C'),
+        React.createElement('li', { key: 'D' }, 'D')
+      );
+    }
+    //diffQueue=[]
+    return React.createElement('ul', { id: 'newCounter' },
+      React.createElement('li', { key: 'A' }, 'A1'),
+      React.createElement('li', { key: 'C' }, 'C1'),
+      React.createElement('li', { key: 'B' }, 'B1'),
+      React.createElement('li', { key: 'E' }, 'E1'),
+      React.createElement('li', { key: 'F' }, 'F1')
+    );
   }
 }
 const ele = React.createElement(Counter, { name: 'haha' })

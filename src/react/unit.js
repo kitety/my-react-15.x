@@ -1,5 +1,6 @@
 import { Element } from './element'
 import $ from 'jquery'
+import types from './types'
 
 let diffQueue = [] // 差异队列
 let updateDepth = 0 //更新的级别
@@ -159,6 +160,7 @@ class NativeUint extends Unit {
         // 返回一个实例
         childString = children.map((child, index) => {
           let unit = createUnit(child)
+          unit._mountIndex = index//每个unit有个_mountIndex 指向自己在父节点的位置
           let str = unit.getMarkUp(`${reactId}.${index}`)
           this._renderedChildrenUnits.push(unit)
           return str
@@ -198,9 +200,26 @@ class NativeUint extends Unit {
    * @param {*} newChildrenElement 新的子元素
    */
   diff (diffQueue, newChildrenElement) {
-    // 新旧节点map  key
+    // 新旧节点map  key->old Unit
     let oldChildrenUnitMap = this.getOldChildrenMap(this._renderedChildrenUnits)
-    let newChildren = this.getNewChildren(oldChildrenUnitMap, newChildrenElement)
+    // 新的 child unit 数组
+    let newChildrenUnits = this.getNewChildren(oldChildrenUnitMap, newChildrenElement)
+    // 旧的节点怎样才可以得到新的状态
+    let lastIndex = 0;//上一个已经确定位置的索引
+    for (let i = 0; i < newChildrenUnits.length; i++) {
+      let newUnit = newChildrenUnits[i];
+      // 第一个拿到A
+      let newKey = (newUnit._currentElement.props && newUnit._currentElement.props.key) || i.toString()
+      let oldChildUnit = oldChildrenUnitMap[newKey]
+      if (oldChildUnit === newUnit) {
+        // 可以复用 新老一致
+        lastIndex = i
+      } else {
+
+      }
+
+
+    }
 
   }
   getNewChildren (oldChildrenUnitMap, newChildrenElement) {
@@ -208,7 +227,7 @@ class NativeUint extends Unit {
      * 先找找老的有没有
      * 有就用 没有就创建新的
      */
-    let newChildren = []
+    let newChildrenUnits = []
     newChildrenElement.forEach((newElement, index) => {
       let newKey = (newElement.props && newElement.props.key) || index.toString()
       let oldUnit = oldChildrenUnitMap[newKey]// 找到老的Unit
@@ -216,13 +235,13 @@ class NativeUint extends Unit {
       if (shouldDeepCompare(newElement, oldElement)) {
         // 一样可以复用 可以复用 更新
         oldUnit.update(newElement)
-        newChildren.push(oldUnit)
+        newChildrenUnits.push(oldUnit)
       } else {
         let nextUnit = createUnit(newElement)
-        newChildren.push(nextUnit)
+        newChildrenUnits.push(nextUnit)
       }
     })
-    return newChildren
+    return newChildrenUnits
   }
   getOldChildrenMap (childUnits = []) {
     let map = {}
