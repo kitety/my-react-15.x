@@ -212,6 +212,7 @@ class NativeUint extends Unit {
     }
   }
   patch(diffQueue) {
+    // 真正改变DOM 改变
     console.log("diffQueue", diffQueue);
     let deleteChildren = []; // 放着要删除的节点
     let deleteMap = {}; // 复用的节点
@@ -297,7 +298,18 @@ class NativeUint extends Unit {
         // 可以复用 新老一致  放入大的Index
         lastIndex = Math.max(lastIndex, oldChildUnit._mountIndex);
       } else {
-        // 不存在
+        // 判断旧的 有就删除
+        if (oldChildUnit) {
+          diffQueue.push({
+            parentId: this._reactId,
+            parentNode: $(`[data-reactid="${this._reactId}"]`), // DOM
+            type: types.REMOVE,
+            fromIndex: oldChildUnit._mountIndex, //从自己的位置
+          });
+          // 取消事件
+          $(document).off(`.${oldChildUnit._reactId}`);
+        }
+        // 新旧不一样
         diffQueue.push({
           parentId: this._reactId,
           parentNode: $(`[data-reactid="${this._reactId}"]`), // DOM
