@@ -10,7 +10,7 @@ class Unit {
     // 挂载在下划线 私有属性
     this._currentElement = element;
   }
-  getMarkUp() {
+  getMarkUp () {
     throw Error("此方法不可以被调用");
   }
 }
@@ -19,11 +19,11 @@ class TextUint extends Unit {
    *
    * @param {*} reactId
    */
-  getMarkUp(reactId) {
+  getMarkUp (reactId) {
     this._reactId = reactId;
     return `<span data-reactid="${reactId}">${this._currentElement}</span>`;
   }
-  update(nextElement) {
+  update (nextElement) {
     if (this._currentElement !== nextElement) {
       this._currentElement = nextElement;
       $(`[data-reactid="${this._reactId}"]`).html(nextElement);
@@ -36,7 +36,7 @@ class CompositeUnit extends Unit {
    *
    * @param {*} reactId
    */
-  getMarkUp(reactId) {
+  getMarkUp (reactId) {
     this._reactId = reactId;
     // type=Component=Counter props: { name: 'haha' }
     let { type: Component, props } = this._currentElement;
@@ -68,7 +68,7 @@ class CompositeUnit extends Unit {
    * @param {*} nextElement 新元素
    * @param {*} partialState 新状态
    */
-  update(nextElement, partialState) {
+  update (nextElement, partialState) {
     // 新元素
     this._currentElement = nextElement || this._currentElement;
     let prevState = Object.assign({}, this._componentInstance.state);
@@ -113,7 +113,7 @@ class CompositeUnit extends Unit {
  * @param {*} preRenderedElement
  * @param {*} nextRenderElement
  */
-function shouldDeepCompare(oldElement, newElement) {
+function shouldDeepCompare (oldElement, newElement) {
   if (oldElement && newElement) {
     let oldType = typeof oldElement;
     let newType = typeof newElement;
@@ -136,7 +136,7 @@ class NativeUint extends Unit {
    *
    * @param {*} reactId
    */
-  getMarkUp(reactId) {
+  getMarkUp (reactId) {
     this._reactId = reactId;
     // this._currentElement为Element的实例
     const { type, props } = this._currentElement;
@@ -188,7 +188,7 @@ class NativeUint extends Unit {
    *
    * @param {*} nextElement 新元素
    */
-  update(nextElement) {
+  update (nextElement) {
     console.log("nextElement", nextElement);
     // 更新属性
     let oldProps = this._currentElement.props;
@@ -200,7 +200,7 @@ class NativeUint extends Unit {
    * 传新的children 和就得children对比 找出差异
    * @param {*} newChildrenElement 新children
    */
-  updateDomChildren(newChildrenElement) {
+  updateDomChildren (newChildrenElement) {
     updateDepth++;
     this.diff(diffQueue, newChildrenElement);
     updateDepth--;
@@ -211,7 +211,7 @@ class NativeUint extends Unit {
       diffQueue = [];
     }
   }
-  patch(diffQueue) {
+  patch (diffQueue) {
     // 真正改变DOM 改变
     console.log("diffQueue", diffQueue);
     let deleteChildren = []; // 放着要删除的节点
@@ -251,7 +251,7 @@ class NativeUint extends Unit {
       }
     }
   }
-  insertChildAt(parentNode, index, node) {
+  insertChildAt (parentNode, index, node) {
     //  判断索引是不是有值的
     let oldChild = parentNode.children().get(index);
     // 有节点 插入到前面 不然直接在最后
@@ -263,7 +263,7 @@ class NativeUint extends Unit {
    * @param {*} diffQueue 队列
    * @param {*} newChildrenElement 新的子元素
    */
-  diff(diffQueue, newChildrenElement) {
+  diff (diffQueue, newChildrenElement) {
     // 新旧节点map  key->old Unit
     let oldChildrenUnitMap = this.getOldChildrenMap(
       this._renderedChildrenUnits
@@ -306,6 +306,8 @@ class NativeUint extends Unit {
             type: types.REMOVE,
             fromIndex: oldChildUnit._mountIndex, //从自己的位置
           });
+          // unit也要删除掉
+          this._renderedChildrenUnits = this._renderedChildrenUnits.filter(item => item !== oldChildUnit)
           // 取消事件
           $(document).off(`.${oldChildUnit._reactId}`);
         }
@@ -333,10 +335,15 @@ class NativeUint extends Unit {
           type: types.REMOVE,
           fromIndex: oldChildUnit._mountIndex, //从自己的位置
         });
+        // unit也要删除掉
+        this._renderedChildrenUnits = this._renderedChildrenUnits.filter(item => item !== oldChildUnit)
+        //  取消删除的unit的事件
+        $(document).off(`.${oldChildUnit._reactId}`);
+
       }
     }
   }
-  getNewChildren(oldChildrenUnitMap, newChildrenElement) {
+  getNewChildren (oldChildrenUnitMap, newChildrenElement) {
     /**
      * 先找找老的有没有
      * 有就用 没有就创建新的
@@ -357,11 +364,13 @@ class NativeUint extends Unit {
         let nextUnit = createUnit(newElement);
         newChildrenUnits.push(nextUnit);
         newChildrenUnitsMap[newKey] = nextUnit;
+        // 要把旧的替换掉
+        this._renderedChildrenUnits[index] = nextUnit
       }
     });
     return { newChildrenUnits, newChildrenUnitsMap };
   }
-  getOldChildrenMap(childUnits = []) {
+  getOldChildrenMap (childUnits = []) {
     let map = {};
     for (let i = 0; i < childUnits.length; i++) {
       const unit = childUnits[i];
@@ -377,7 +386,7 @@ class NativeUint extends Unit {
    * @param {*} oldProps
    * @param {*} newProps
    */
-  updateDomProperties(oldProps, newProps) {
+  updateDomProperties (oldProps, newProps) {
     let propName;
     // 循环老的属性集合
     for (propName in oldProps) {
@@ -422,7 +431,7 @@ class NativeUint extends Unit {
     }
   }
 }
-function createUnit(element) {
+function createUnit (element) {
   if (["number", "string"].includes(typeof element)) {
     return new TextUint(element);
   } else if (

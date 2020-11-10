@@ -153,13 +153,14 @@ class Counter extends React.Component {
   handleClick = (e) => {
     let { text } = this.state;
     if (!text) return;
-    this.setState({ list: [...this.state.list, text] });
+    this.setState({ list: [...this.state.list, text], text: '' });
   };
   del = (index) => {
+    console.log(this.state)
     this.setState({ list: this.state.list.filter((item, i) => i !== index) });
   };
 
-  render() {
+  render () {
     let input = React.createElement("input", {
       onKeyup: this.onChange,
       value: this.state.text,
@@ -173,13 +174,13 @@ class Counter extends React.Component {
     );
     let list = this.state.list.map((item, index) =>
       React.createElement(
-        "div",
+        "li",
         {},
         item,
         React.createElement("button", { onClick: () => this.del(index) }, "-")
       )
     );
-    return React.createElement("div", {}, input, button, ...list);
+    return React.createElement("div", {}, input, button, React.createElement("ul", {}, ...list));
   }
 }
 const ele = React.createElement(Counter, { name: "haha" });
